@@ -1,0 +1,38 @@
+name: Docker for runner-x
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'texlive/**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'texlive/**'
+  workflow_dispatch:
+    
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults: 
+      run: 
+        shell: bash
+        working-directory: texlive
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Docker Build
+        shell: bash
+        run: |
+          docker buildx build . -t ghcr.io/brandoneto/runner-x:$(date +%Y%m%d.$GITHUB_RUN_ATTEMPT)
+          docker images
+      - name: Docker Push
+        shell: bash
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u brandoneto --password-stdin
+          docker push ghcr.io/brandoneto/runner-x:$(date +%Y%m%d.$GITHUB_RUN_ATTEMPT)
